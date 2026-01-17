@@ -8,6 +8,8 @@ import sys, os
 from termcolor import colored
 import json
 
+import convert_to_intermediate as inter
+
 def error(errorMsg):
     print(colored(errorMsg, 'light_red'))
     raise SystemExit
@@ -38,7 +40,7 @@ def check_for_valid_asset_json_field(expectedName, expectedType, keys, assetDict
     if foundType is not expectedType:
         error("'" + expectedName + "' value in asset '" + assetName + "' is not expected type '" + expectedType + "', instead found '" + foundType + "'")
         
-def verify_json_contents(jsonDict):
+def verify_json_contents(jsonDict, validTypes):
     dictKeys = jsonDict.keys()
 
     check_for_valid_base_json_field('is_mod',    bool, dictKeys, jsonDict)
@@ -50,12 +52,19 @@ def verify_json_contents(jsonDict):
         error("No assets were found in 'assets' object, exiting")
         
     for asset in assetsDict.items():
+        assetName = asset[0]
+        if len(assetName) > 32:
+            error("Asset name '" + assetName + "' is too long, asset names must be a maximum of 32 characters")
+        
         assetInfo = asset[1]
         if type(assetInfo) is not dict:
-            error(asset[0] + " is not an expected asset object value in ")
+            error(assetName + " is not an expected asset object value in ")
 
-        check_for_valid_asset_json_field('type',     str, assetInfo.keys(), assetInfo, asset[0])
-        check_for_valid_asset_json_field('filename', str, assetInfo.keys(), assetInfo, asset[0])
+        check_for_valid_asset_json_field('type',     str, assetInfo.keys(), assetInfo, assetName)
+        if assetInfo['type'] not in validTypes:
+            error(assetName + " type is invalid: '" + assetInfo['type'] + "'")
+        check_for_valid_asset_json_field('filename', str, assetInfo.keys(), assetInfo, assetName)
+        check_for_valid_asset_json_field('tags',     list, assetInfo.keys(), assetInfo, assetName)
 
 def check_for_assets(jsonDict):
     assetsDict = jsonDict['assets']
@@ -129,17 +138,26 @@ def main():
 \t"assets": {
 \t\t"my_asset_engine_name1": {
 \t\t\t"type": "image",
-\t\t\t"filename": "test.png"
+\t\t\t"filename": "test.png",
+\t\t\t"tags": [ "test", "tagged" ]
 \t\t},
 \t\t
 \t\t"my_asset_engine_name2": {
 \t\t\t"type": "image",
-\t\t\t"filename": "test2.ktx2"
+\t\t\t"filename": "test2.ktx2",
+\t\t\t"tags": []
 \t\t},
 \t\t
 \t\t"my_asset_engine_name3": {
 \t\t\t"type": "audio",
-\t\t\t"filename": "test_audio.wav"
+\t\t\t"filename": "test_audio.wav",
+\t\t\t"tags": [ "background" ]
+\t\t},
+\t\t
+\t\t"my_asset_engine_name4": {
+\t\t\t"type": "image",
+\t\t\t"filename": "test3.ktx",
+\t\t\t"tags": [ "upgraded" ]
 \t\t}
 \t}
 }
@@ -159,16 +177,35 @@ def main():
         jsonDict = json.loads(jsonContents)
 
     # Verify contents as valid
-    print("Verifying input file is valid...")
-    verify_json_contents(jsonDict)
+    print(colored("Verifying input file is valid...", 'white'))
+    verify_json_contents(jsonDict, typeFolderPaths)
     print(colored("Input JSON fields valid\n", 'light_green'))
 
     # Fields valid, now check that each raw asset actually exists
-    print("Verifying defined assets are present...")
+    print(colored("Verifying defined assets are present...", 'white'))
     check_for_assets(jsonDict)
     print(colored("All expected assets found\n", 'light_green'))
     
     # Write each file into an engine friendly intermediate file, store in intermediate directory
+    print("Processing asset files to intermediate files...")
+    for asset in jsonDict['assets'].items():
+        assetName = asset[0]
+        assetInfo = asset[1]
+        
+        assetType = assetInfo['type']
+        assetFilename = assetInfo['filename']
+        assetTags = assetInfo['tags']
+        
+        if   assetType == imageFolderPath:
+            inter.convert_image(assetName, assetFilename, assetTags, rawFolderPath + '\\' + imageFolderPath + "\\", intermediateFolderPath + '\\' + imageFolderPath + '\\')
+        elif assetType == audioFolderPath:
+            print(colored("AUDIO NOT IMPLEMENTED", 'light_red'))
+        elif assetType == videoFolderPath:
+            print(colored("VIDEO NOT IMPLEMENTED", 'light_red'))
+        elif assetType == jsonFolderPath:
+            print(colored("JSON NOT IMPLEMENTED", 'light_red'))
+        elif assetType == fontFolderPath:
+            print(colored("FONT NOT IMPLEMENTED", 'light_red'))
     
     # Package assets
 
