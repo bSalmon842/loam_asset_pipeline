@@ -8,20 +8,21 @@ import os
 from termcolor import colored
 import subprocess
 
-def convert_image(assetName, filename, tags, rawFolderPath, interFolderPath):
-    print("\tProcessing " + colored(assetName, 'light_cyan') + " at " + colored(rawFolderPath + filename + "...", 'white'))
-
-    
+def write_tags(tags):
     tagOutput = "\t\t" + colored("Tags", 'light_magenta') + ": "
     for index, tag in enumerate(tags):
         tagOutput += '"' + tag + '"'
         if index != (len(tags) - 1):
             tagOutput += ', '
     print(tagOutput)
+
+def convert_image(assetName, filename, tags, rawFolderPath, interFolderPath):
+    print("\tProcessing image " + colored(assetName, 'light_cyan') + " at " + colored(rawFolderPath + filename + "...", 'white'))
+
+    write_tags(tags)
     
-    root, ext = os.path.splitext(filename)
+    expectedKTXFilename, ext = os.path.splitext(filename)
     inputExt = ext.lower()
-    expectedKTXFilename = root
     if inputExt == ".ktx":
         print(colored("\t\tNeeds to be updated from ktx to ktx2 format. Updating...", "light_yellow"))
         result = subprocess.run(['ktx2ktx2', '-f', rawFolderPath + filename], capture_output=True, text=True)
@@ -54,5 +55,32 @@ def convert_image(assetName, filename, tags, rawFolderPath, interFolderPath):
         raise SystemExit
 
     print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + expectedKTXFilename + '.ii' + "'", 'light_green'))
-        
     print();
+
+def convert_audio(assetName, filename, tags, rawFolderPath, interFolderPath):
+    print("\tProcessing audio " + colored(assetName, 'light_cyan') + " at " + colored(rawFolderPath + filename + "...", 'white'))
+
+    write_tags(tags)
+    
+    root, ext = os.path.splitext(filename)
+    inputExt = ext.lower()
+    if inputExt != ".wav" and inputExt != ".ogg":
+        print(colored("Only wav and ogg files are acceptable sound files", 'light_red'))
+        raise SystemExit
+
+    print("\tPackaging " + colored(filename, 'light_cyan') + " to intermediate audio (.ia) file...")
+    scriptPath = os.path.dirname(__file__) + '\\'
+    binPath = scriptPath + 'exe_bin\\'
+    result = subprocess.run([binPath + 'inter_process.exe', 'a', rawFolderPath + filename, assetName, str(tags)], capture_output=True, text=True)
+    if result.stdout is not None and len(result.stdout) > 0:
+        print(result.stdout)
+    if result.returncode != 0:
+        print("\t" + colored("Failed to process file into intermediate file with error " + str(result.returncode) + ":", 'light_red'))
+        print("\t\t" + colored(result.stderr, 'light_red'))
+        raise SystemExit
+
+    print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + root + '.ia' + "'", 'light_green'))
+    
+    print();
+
+    

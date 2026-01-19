@@ -48,12 +48,23 @@ main :: () {
     
     dataSize : s64;
     data := null;
+    outputFilename : string;
     
     if inputType == {
 	case "i"; {
 	    // NOTE: We don't do any extra processing for ktx files
 	    dataSize = fileContents.count;
 	    data = fileContents.data;
+	    outputFilename = tprint("inter\\image\\%.ii", path_strip_extension(path_filename(inputFile)));
+	}
+
+	case "a"; {
+	    audioData := load_audio_data(inputName, fileContents);
+	    processedData := pack_sound_data(*audioData);
+	    
+	    dataSize = processedData.count;
+	    data = processedData.data;
+	    outputFilename = tprint("inter\\audio\\%.ia", path_strip_extension(path_filename(inputFile)));
 	}
 	
 	case; error_with_code(tprint("Invalid input type: %", inputType), .Invalid_Input_Type);
@@ -73,8 +84,8 @@ main :: () {
 	contentsIndex += it.count;
     }
     memcpy(intermediateContents + contentsIndex, data, dataSize);
+    contentsIndex += dataSize;
 
-    outputFilename := tprint("inter\\image\\%.ii", path_strip_extension(path_filename(inputFile)));
     writeSuccess := write_entire_file(outputFilename, intermediateContents, contentsIndex);
     if !writeSuccess {
 	error_with_code(tprint("Failed to write \"%\"", outputFilename), .Write_Failure);
@@ -86,6 +97,7 @@ main :: () {
 #import "File";
 
 #import "ktx";
+#import "Sound_Player_bs842";
 
 #import,file "../../bs_modules/loam/code/shared_asset_info.jai";
 

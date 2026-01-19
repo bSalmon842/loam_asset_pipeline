@@ -199,7 +199,7 @@ def main():
         if   assetType == imageFolderPath:
             inter.convert_image(assetName, assetFilename, assetTags, rawFolderPath + '\\' + imageFolderPath + "\\", intermediateFolderPath + '\\' + imageFolderPath + '\\')
         elif assetType == audioFolderPath:
-            print(colored("AUDIO NOT IMPLEMENTED", 'light_red'))
+            inter.convert_audio(assetName, assetFilename, assetTags, rawFolderPath + '\\' + audioFolderPath + "\\", intermediateFolderPath + '\\' + audioFolderPath + '\\')
         elif assetType == videoFolderPath:
             print(colored("VIDEO NOT IMPLEMENTED", 'light_red'))
         elif assetType == jsonFolderPath:
