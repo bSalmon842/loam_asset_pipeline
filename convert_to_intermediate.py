@@ -8,6 +8,10 @@ import os
 from termcolor import colored
 import subprocess
 
+binPath = os.path.dirname(os.path.abspath(__file__)) + '\\exe_bin\\'
+
+# Helper Functions
+
 def write_tags(tags):
     tagOutput = "\t\t" + colored("Tags", 'light_magenta') + ": "
     for index, tag in enumerate(tags):
@@ -16,12 +20,23 @@ def write_tags(tags):
             tagOutput += ', '
     print(tagOutput)
 
+def handle_inter_subprocess_result(result):
+    if result.stdout is not None and len(result.stdout) > 0:
+        print(result.stdout)
+    if result.returncode != 0:
+        print("\t" + colored("Failed to process file into intermediate file with error " + str(result.returncode) + ":", 'light_red'))
+        print("\t\t" + colored(result.stderr, 'light_red'))
+        raise SystemExit
+
+
+# Conversion Functions
+    
 def convert_image(assetName, filename, tags, rawFolderPath, interFolderPath):
     print("\tProcessing image " + colored(assetName, 'light_cyan') + " at " + colored(rawFolderPath + filename + "...", 'white'))
 
     write_tags(tags)
     
-    expectedKTXFilename, ext = os.path.splitext(filename)
+    root, ext = os.path.splitext(filename)
     inputExt = ext.lower()
     if inputExt == ".ktx":
         print(colored("\t\tNeeds to be updated from ktx to ktx2 format. Updating...", "light_yellow"))
@@ -31,7 +46,7 @@ def convert_image(assetName, filename, tags, rawFolderPath, interFolderPath):
             raise SystemExit
         print(colored("\t\tSuccessfully updated to ktx2 format", 'light_green'))
     elif inputExt != ".ktx2":
-        outFilepath = rawFolderPath + expectedKTXFilename + '.ktx2'
+        outFilepath = rawFolderPath + root + '.ktx2'
         print(colored("\t\tNeeds to be converted to ktx2 format. Converting...", "light_yellow"))
         result = subprocess.run(['ktx', 'create', '--format', 'R8G8B8A8_SRGB', '--assign-tf', 'KHR_DF_TRANSFER_SRGB',
                                  '--generate-mipmap', '--encode', 'basis-lz', rawFolderPath + filename, outFilepath], capture_output=True, text=True)
@@ -39,27 +54,19 @@ def convert_image(assetName, filename, tags, rawFolderPath, interFolderPath):
             print(colored(result.stderr, 'light_red'))
             raise SystemExit
         print(colored("\t\tSuccessfully converted to " + outFilepath, 'light_green'))
-    else:
-        print(colored("\t\tAlready the correct format", 'light_green'))
 
-    ktxFile = expectedKTXFilename + '.ktx2'
+    ktxFile = root + '.ktx2'
     print("\tPackaging " + colored(ktxFile, 'light_cyan') + " to intermediate image (.ii) file...")
-    scriptPath = os.path.dirname(__file__) + '\\'
-    binPath = scriptPath + 'exe_bin\\'
     result = subprocess.run([binPath + 'inter_process.exe', 'i', rawFolderPath + ktxFile, assetName, str(tags)], capture_output=True, text=True)
-    if result.stdout is not None and len(result.stdout) > 0:
-        print(result.stdout)
-    if result.returncode != 0:
-        print("\t" + colored("Failed to process file into intermediate file with error " + str(result.returncode) + ":", 'light_red'))
-        print("\t\t" + colored(result.stderr, 'light_red'))
-        raise SystemExit
+    handle_inter_subprocess_result(result)
 
-    print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + expectedKTXFilename + '.ii' + "'", 'light_green'))
-    print();
+    print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + root + '.ii' + "'\n", 'light_green'))
+
+    return interFolderPath + root + '.ii'
 
 def convert_audio(assetName, filename, tags, rawFolderPath, interFolderPath):
     print("\tProcessing audio " + colored(assetName, 'light_cyan') + " at " + colored(rawFolderPath + filename + "...", 'white'))
-
+    
     write_tags(tags)
     
     root, ext = os.path.splitext(filename)
@@ -69,18 +76,47 @@ def convert_audio(assetName, filename, tags, rawFolderPath, interFolderPath):
         raise SystemExit
 
     print("\tPackaging " + colored(filename, 'light_cyan') + " to intermediate audio (.ia) file...")
-    scriptPath = os.path.dirname(__file__) + '\\'
-    binPath = scriptPath + 'exe_bin\\'
     result = subprocess.run([binPath + 'inter_process.exe', 'a', rawFolderPath + filename, assetName, str(tags)], capture_output=True, text=True)
-    if result.stdout is not None and len(result.stdout) > 0:
-        print(result.stdout)
-    if result.returncode != 0:
-        print("\t" + colored("Failed to process file into intermediate file with error " + str(result.returncode) + ":", 'light_red'))
-        print("\t\t" + colored(result.stderr, 'light_red'))
+    handle_inter_subprocess_result(result)
+    
+    print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + root + '.ia' + "'\n", 'light_green'))
+
+    return interFolderPath + root + '.ia'
+
+def convert_json(assetName, filename, tags, rawFolderPath, interFolderPath):
+    print("\tProcessing json " + colored(assetName, 'light_cyan') + " at " + colored(rawFolderPath + filename + "...", 'white'))
+
+    write_tags(tags)
+
+    root, ext = os.path.splitext(filename)
+    inputExt = ext.lower()
+    if inputExt != ".json":
+        print(colored("Not a JSON file", 'light_red'))
         raise SystemExit
 
-    print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + root + '.ia' + "'", 'light_green'))
-    
-    print();
+    print("\tPackaging " + colored(filename, 'light_cyan') + " to intermediate json (.ij) file...")
+    result = subprocess.run([binPath + 'inter_process.exe', 'j', rawFolderPath + filename, assetName, str(tags)], capture_output=True, text=True)
+    handle_inter_subprocess_result(result)
 
-    
+    print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + root + '.ij' + "'\n", 'light_green'))
+
+    return interFolderPath + root + '.ij'
+
+def convert_font(assetName, filename, tags, rawFolderPath, interFolderPath):
+    print("\tProcessing font " + colored(assetName, 'light_cyan') + " at " + colored(rawFolderPath + filename + "...", 'white'))
+
+    write_tags(tags)
+
+    root, ext = os.path.splitext(filename)
+    inputExt = ext.lower()
+    if inputExt != ".ttf":
+        print(colored("Only ttf files are acceptable font files", 'light_red'))
+        raise SystemExit
+
+    print("\tPackaging " + colored(filename, 'light_cyan') + " to intermediate font (.if) file...")
+    result = subprocess.run([binPath + 'inter_process.exe', 'f', rawFolderPath + filename, assetName, str(tags)], capture_output=True, text=True)
+    handle_inter_subprocess_result(result)
+
+    print(colored("\tSuccessfully packaged " + assetName + " to intermediate file '" + root + '.if' + "'\n", 'light_green'))
+
+    return interFolderPath + root + '.if'

@@ -59,12 +59,28 @@ main :: () {
 	}
 
 	case "a"; {
+	    // We preload the sound data and just save the sound data struct info so it doesn't need to be loaded do wav processing in engine,
+	    // this very slightly increases the file size (only a couple hundred bytes)
 	    audioData := load_audio_data(inputName, fileContents);
 	    processedData := pack_sound_data(*audioData);
 	    
 	    dataSize = processedData.count;
 	    data = processedData.data;
 	    outputFilename = tprint("inter\\audio\\%.ia", path_strip_extension(path_filename(inputFile)));
+	}
+
+	case "j"; {
+	    // NOTE: We don't do any extra processing for json files
+	    dataSize = fileContents.count;
+	    data = fileContents.data;
+	    outputFilename = tprint("inter\\json\\%.ij", path_strip_extension(path_filename(inputFile)));
+	}
+
+	case "f"; {
+	    // NOTE: We don't do any extra processing for font files
+	    dataSize = fileContents.count;
+	    data = fileContents.data;
+	    outputFilename = tprint("inter\\font\\%.if", path_strip_extension(path_filename(inputFile)));
 	}
 	
 	case; error_with_code(tprint("Invalid input type: %", inputType), .Invalid_Input_Type);

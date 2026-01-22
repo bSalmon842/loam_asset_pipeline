@@ -18,6 +18,9 @@ Created: 16JAN2026
 INTER_PROCESS_FILE :: "inter_process.jai";
 INTER_PROCESS_NAME :: "inter_process";
 
+PACKAGE_FILE :: "package.jai";
+PACKAGE_NAME :: "package";
+
 #run build_main();
 
 build_main :: () {    
@@ -25,6 +28,7 @@ build_main :: () {
     make_directory_if_it_does_not_exist(buildFolderPath);
 
     build_program(buildFolderPath, INTER_PROCESS_FILE, INTER_PROCESS_NAME);
+    build_program(buildFolderPath, PACKAGE_FILE, PACKAGE_NAME);
 }
 
 build_program :: (buildFolder : string, mainFile : string, appName : string) {
