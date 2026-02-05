@@ -58,7 +58,7 @@ EXAMPLE_JSON_FILE_CONTENTS = """
 \t\t\t"tags": [ "mono", "internal" ]
 \t\t},
 \t\t
-\t\t"my_asset_test_name5": {
+\t\t"my_asset_test_name6": {
 \t\t\t"type": "json",
 \t\t\t"filename": "test_json.json",
 \t\t\t"tags": [ "sprite_data" ]

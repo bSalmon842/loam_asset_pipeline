@@ -48,10 +48,6 @@ compress_data :: (data : string) -> bool, string {
     return true, compData;
 }
 
-
-// The maximum size a package can be before we move to a new package
-MAX_PACKAGE_SIZE :: cast(s64) #run MB(512);
-
 Errors :: enum s32 {
     Success;
     Invalid_Arguments;
@@ -135,7 +131,7 @@ main :: () {
     currentFileIndex := 0;
     currentPackageFileContents : String_Builder;
     currentMappingFileContents : String_Builder;
-    init_string_builder(*currentPackageFileContents, MAX_PACKAGE_SIZE);
+    init_string_builder(*currentPackageFileContents, MAX_ASSET_PACKAGE_SIZE);
     init_string_builder(*currentMappingFileContents);
     append(*currentMappingFileContents, "{");
     for interArray {
@@ -145,7 +141,7 @@ main :: () {
 	}
 
 	currentOffset := builder_string_length(*currentPackageFileContents);
-	if currentOffset + fileContents.count > MAX_PACKAGE_SIZE {
+	if currentOffset + fileContents.count > MAX_ASSET_PACKAGE_SIZE {
 	    write_package_and_map(packageFilenameStructure, mappingFilenameStructure, *currentFileIndex,
 				  *currentPackageFileContents, *currentMappingFileContents, *packageFiles, *mappingFiles);
 	}
@@ -194,4 +190,6 @@ main :: () {
 #import "File";
 
 #import "lz4_bs842";
+
+#import,file "../../bs_modules/loam/code/shared_asset_info.jai";
 
