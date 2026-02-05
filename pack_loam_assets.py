@@ -18,6 +18,8 @@ videoFolderPath = "video"
 jsonFolderPath = "json"
 fontFolderPath = "font"
 typeFolderPaths = [ imageFolderPath, audioFolderPath, videoFolderPath, jsonFolderPath, fontFolderPath ]
+
+validPackTypes = [ "engine", "game", "mod", "expac" ]
     
 rawFolderPath = "raw"
 intermediateFolderPath = "inter"
@@ -114,6 +116,12 @@ def verify_json_contents(jsonDict, validTypes):
 
     if len(jsonDict['game_code']) > 4:
         error("game_code must be at most 4 characters long")
+
+    if jsonDict['pack_type'] not in validPackTypes:
+        error("pack_type must be one of: " + str(validPackTypes))
+
+    if jsonDict['pack_type'] == "engine" and jsonDict['game_code'] != "LOAM":
+        error("pack_type of 'engine' can only be used with the Loam engine's code")
     
     assetsDict = jsonDict["assets"]
     if len(assetsDict) == 0:
